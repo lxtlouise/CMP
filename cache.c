@@ -30,9 +30,18 @@ for (k=0 ; k< cp->assoc ; k++)
 cp->blocks[index][way].LRU = 0 ;
 }
 
+unsigned long cache_getAddress(cache_t *cp, unsigned long set_index, unsigned long tag){
+    //block_address = (address / cp->blocksize);
+    //tag = block_address / cp->nsets;
+    //index = block_address - (tag * cp->nsets) ;
 
+    unsigned long block_address = set_index + tag*cp->nsets;
 
-int cache_access(cache_t *cp, unsigned long address, int access_type /*0 for read, 1 for write*/)
+    unsigned long address = block_address * cp->blocksize;
+    return address;
+}
+
+int cache_access(cache_t *cp, unsigned long *up_access_address, unsigned long address, int access_type /*0 for read, 1 for write*/)
 //returns 0 (if a hit), 1 (if a miss but no dirty block is writen back) or
 //2 (if a miss and a dirty block is writen back)
 {
@@ -75,6 +84,7 @@ for (way=0 ; way< cp->assoc ; way++)		/* look for an invalid entry */
     way = i ;
   }
 // cp->blocks[index][way] is the LRU block
+up_access_address = cache_getAddress(cp, index, cp->blocks[index][way].tag);
 cp->blocks[index][way].tag = tag;
 updateLRU(cp, index, way);
 if (cp->blocks[index][way].dirty == 0)

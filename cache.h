@@ -1,6 +1,14 @@
 /* This file contains a functional simulator of an associative cache with LRU replacement*/
 #ifndef _CACHE_H
 #define _CACHE_H
+
+#define READ_ACCESS 0
+#define WRITE_ACCESS 1
+
+#define CACHE_HIT 0
+#define CACHE_MISS_NO_EVICT 1
+#define CACHE_MISS_EVICT 2
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -35,8 +43,9 @@ struct cache_access_pattern_t{
 cache_t * cache_create(int size, int blocksize, int assoc);
 
 void updateLRU(cache_t *cp ,int index, int way);
+unsigned long cache_getAddress(cache_t *cp, unsigned long set_index, unsigned long tag);
 
-int cache_access(cache_t *cp, unsigned long address, int access_type /*0 for read, 1 for write*/);
+int cache_access(cache_t *cp, unsigned long *up_access_address, unsigned long address, int access_type /*0 for read, 1 for write*/);
 //returns 0 (if a hit), 1 (if a miss but no dirty block is writen back) or
 //2 (if a miss and a dirty block is writen back)
 
