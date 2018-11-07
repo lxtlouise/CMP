@@ -10,6 +10,7 @@ void init_tile(Tile *tile){
     tile->accesses_capacity = 16;
     tile->accesses = malloc(sizeof(mem_access_t) * tile->accesses_capacity);
     tile->n_accesses = 0;
+    tile->is_finished = 1;
 }
 
 void init_cpu(){
@@ -73,11 +74,6 @@ void read_trace_file(char *fileName){
         tempLine = strtok(NULL, WHITE_SPACE);
         unsigned long address = strtoll(tempLine, NULL, 0);
 
-        /*if(cpu.n_accesses >= cpu.accesses_capacity){
-            cpu.accesses_capacity = cpu.accesses_capacity << 1;
-            cpu.accesses = realloc(cpu.accesses, cpu.accesses_capacity);
-        }*/
-
         Tile *tile = &(cpu.tiles[core_id]);
         if(tile->n_accesses >= tile->accesses_capacity){
             tile->accesses_capacity = tile->accesses_capacity << 1;
@@ -87,6 +83,11 @@ void read_trace_file(char *fileName){
         tile->accesses[tile->n_accesses].core_id = core_id;
         tile->accesses[tile->n_accesses].access_type = access_type;
         tile->accesses[tile->n_accesses].address = address;
+        tile->accesses[tile->n_accesses].delay = 0;
+        tile->is_finished = 0;
+        if(tile->n_accesses>0){
+            tile->accesses[tile->n_accesses].delay = clock_cycle - tile->accesses[tile->n_accesses-1].cycle - 1;
+        }
         tile->n_accesses++;
 
         line = (char *) malloc (sizeof(char) * MAX_LINE);
@@ -98,32 +99,48 @@ void read_trace_file(char *fileName){
         fclose(fp);
 }
 
-int tile2tile_msg(Tile *src, Tile *dst){
-    return config.C * (abs(src->index_x - dst->index_x) + abs(src->index_y - dst->index_y));
-}
-
-mem_access_t * get_tile_next_access(Tile *tile, int clock_cycle){
+mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed){
     int i;
-    for(i = tile->access_index; i<tile->n_accesses; i++){
-        if(tile->accesses[i].cycle + tile->delay_offset > clock_cycle){
-            tile->access_index = i;
-            return NULL;
+    *completed = NULL;
+    if(tile->is_finished){
+        if(tile->delay_offset>0){
+            tile->delay_offset--;
+            if(tile->delay_offset==0){
+                *completed = &(tile->accesses[tile->access_index-1]);
+                // request completed
+            }
         }
-        if(tile->accesses[i].cycle + tile->delay_offset == clock_cycle){
-            tile->access_index = i+1;
-            return &(tile->accesses[i]);
-        }
+        return NULL;
     }
-    tile->access_index = i+1;
-    return NULL;
+    mem_access_t *access = &(tile->accesses[tile->access_index]);
+    if(tile->delay_offset>0 || access->delay>0){
+        if(tile->delay_offset>0){
+            tile->delay_offset--;
+            if(tile->delay_offset==0){
+                *completed = &(tile->accesses[tile->access_index-1]);
+                // request completed
+            }
+        } else if(access->delay>0)
+            access->delay--;
+        return NULL;
+    } else {
+        tile->access_index++;
+        tile->delay_offset = 0;
+        if(tile->access_index>=tile->n_accesses)
+            tile->is_finished = 1;
+        return access;
+    }
 }
 
-void print_mem_access(Tile *tile, mem_access_t *access){
-    printf("%i, %i, %s, 0x%x\n", tile->delay_offset + access->cycle, access->core_id, access->access_type==READ_ACCESS?"READ":"WRITE", access->address);
+void print_mem_issue(memory_request_t *request){
+    printf("%-3i: ISSUE    %-6i, %s, 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->access->address);
+}
+
+void print_mem_complete(memory_request_t *request){
+    printf("%-3i: COMPLETE %-6i, %s, 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->access->address);
 }
 
 int execute_mem_request(int clock_cycle, int core_id, int access_type, unsigned long memory_address){
-    printf("%i, %i, %s, 0x%x\n", clock_cycle, core_id, access_type==READ_ACCESS?"READ":"WRITE", memory_address);
     Tile *tile = &(cpu.tiles[core_id]);
     unsigned long up_address;
     int r = cache_access(tile->L1_cache, &up_address, memory_address, access_type);

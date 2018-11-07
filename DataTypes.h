@@ -18,13 +18,12 @@ typedef struct _config {
     int d1; // memory controller in tile0 has delay d1 to communicate with main memory
 } Config;
 
-extern Config config;
-
 typedef struct _mem_access{
     int cycle;
     int core_id;
     int access_type;
     unsigned long address;
+    int delay;
 }mem_access_t;
 
 typedef struct _tile {
@@ -37,17 +36,22 @@ typedef struct _tile {
     mem_access_t *accesses;
     int n_accesses;
     size_t accesses_capacity;
+    int is_finished;
 }Tile;
+
+typedef struct _memory_request{
+    Tile *tile;
+    mem_access_t *access;
+    int delay;
+}memory_request_t;
 
 typedef struct _cpu{
     int width, height;
     Tile* tiles;
     int n_tiles;
-
-    /*mem_access_t *accesses;
-    int n_accesses;
-    size_t accesses_capacity;*/
 }Cpu;
+
+extern Config config;
 
 extern Cpu cpu;
 
@@ -60,13 +64,12 @@ void init_cpu();
 
 void read_trace_file(char *filename);
 
-int execute_mem_request(int clock_cycle, int core_id, int access_type, unsigned long memory_address);
+int execute_mem_request(int clock_cycle, int core_id, int access_type, unsigned long memory_address);// WIP
 
-int tile2tile_msg(Tile *src, Tile *dst); /* returns the delay for tile to tile message */
+mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed);
 
-mem_access_t * get_tile_next_access(Tile *tile, int clock_cycle);
-
-void print_mem_access(Tile *tile, mem_access_t *access);
+void print_mem_issue(memory_request_t *request);
+void print_mem_complete(memory_request_t *request);
 
 
 #endif // _DATA_TYPES_H
