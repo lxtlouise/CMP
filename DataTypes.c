@@ -1,5 +1,5 @@
 #include "DataTypes.h"
-#include "math.h"
+#include <math.h>
 Cpu cpu;
 
 void init_tile(Tile *tile){

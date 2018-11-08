@@ -9,7 +9,7 @@ SOURCES := $(wildcard $(SRC)/*.c)
 OBJECTS := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
 
 all: $(OBJECTS)
-	$(CC) $^ -o cmp
+	$(CC) $^ -o cmp -lm
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) -I$(SRC) -c $< -o $@
