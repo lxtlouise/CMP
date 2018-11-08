@@ -1,6 +1,6 @@
 #include "cmp.h"
 
-int tile2tile_msg(Tile *src, Tile *dst){
+int tile2tile_delay(Tile *src, Tile *dst){
     return config.C * (abs(src->index_x - dst->index_x) + abs(src->index_y - dst->index_y));
 }
 
