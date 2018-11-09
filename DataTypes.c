@@ -140,14 +140,3 @@ void print_mem_complete(memory_request_t *request){
     printf("%-3i: COMPLETE %-6i, %s, 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->access->address);
 }
 
-int execute_mem_request(int clock_cycle, int core_id, int access_type, unsigned long memory_address){
-    Tile *tile = &(cpu.tiles[core_id]);
-    unsigned long up_address;
-    int r = cache_access(tile->L1_cache, &up_address, memory_address, access_type);
-    if(r==CACHE_HIT){
-
-    } else if(r == CACHE_MISS_NO_EVICT){
-    } else if(r == CACHE_MISS_EVICT){
-    }
-    //mem_request(tile, memory_address, access_type);
-}

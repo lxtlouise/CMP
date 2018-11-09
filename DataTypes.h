@@ -64,8 +64,6 @@ void init_cpu();
 
 void read_trace_file(char *filename);
 
-int execute_mem_request(int clock_cycle, int core_id, int access_type, unsigned long memory_address);// WIP
-
 mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed);
 
 void print_mem_issue(memory_request_t *request);
