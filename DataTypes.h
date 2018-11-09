@@ -27,6 +27,7 @@ typedef struct _mem_access{
 }mem_access_t;
 
 typedef struct _tile {
+    int index;
     int index_x, index_y;
     cache_t* L1_cache;
     cache_t* L2_cache;

@@ -36,6 +36,7 @@ void init_cpu(){
             x = 0;
             y++;
         }
+        cpu.tiles[i].index = i;
         cpu.tiles[i].index_x = x;
         cpu.tiles[i].index_y = y;
         init_tile(&(cpu.tiles[i]));

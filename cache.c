@@ -123,10 +123,10 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
     index = block_address - (tag * cp->nsets) ;
 
     for (i = 0; i < cp->assoc; i++) {	/* look for the requested block */
-        if (cp->blocks[index][i].tag == tag && cp->blocks[index][i].valid == 1)
+        if (cp->blocks[index][i].tag == tag) // found block for the address
         {
             *block = &(cp->blocks[index][i]);
-            return CACHE_HIT;
+            return CACHE_SAME_BLOCK;
         }
     }
 
@@ -134,7 +134,7 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
         if (cp->blocks[index][way].valid == 0)	/* found an invalid entry */
         {
             *block = &(cp->blocks[index][way]);
-            return CACHE_MISS_NO_EVICT;
+            return CACHE_DIFFERENT_BLOCK;
         }
 
     max = cp->blocks[index][0].LRU ;			/* find the LRU block */
@@ -145,7 +145,32 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
             way = i ;
         }
     *block = &(cp->blocks[index][way]);
-    return CACHE_MISS_EVICT;
+    return CACHE_DIFFERENT_BLOCK;
+}
+
+void cache_apply_access(cache_t *cp, struct cache_blk_t *block, unsigned long address, int access_type /*0 for read, 1 for write*/)
+{
+    int i ;
+    int block_address ;
+    int index ;
+    int tag ;
+    int way ;
+    int max ;
+
+    block_address = (address / cp->blocksize);
+    tag = block_address / cp->nsets;
+    index = block_address - (tag * cp->nsets) ;
+
+    for (i = 0; i < cp->assoc; i++) {	/* look for the requested block */
+        if (&(cp->blocks[index][i]) == block)
+        {
+            updateLRU(cp, index, i) ;
+            cp->blocks[index][way].valid = 1 ;
+            cp->blocks[index][way].tag = tag ;
+            cp->blocks[index][way].block_address = cache_getAddress(cp, index, tag);
+            if (access_type == 1) cp->blocks[index][i].dirty = 1 ;
+        }
+    }
 }
 
 void cache_block_init(cache_t *cp, struct cache_blk_t *block, unsigned long address){
@@ -156,7 +181,7 @@ void cache_block_init(cache_t *cp, struct cache_blk_t *block, unsigned long addr
     block->valid = 1 ;
     block->tag = tag ;
     block->block_address = cache_get_block_address(cp, address);
-    block->directory_entry.block_state = 0;
+    block->directory_entry.block_state = BLOCK_I;
     for(i=0; i<cpu.n_tiles; i++){
         block->directory_entry.owner_tiles[i] = 0;
     }

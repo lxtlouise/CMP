@@ -9,6 +9,13 @@
 #define CACHE_MISS_NO_EVICT 1
 #define CACHE_MISS_EVICT 2
 
+#define CACHE_SAME_BLOCK 0
+#define CACHE_DIFFERENT_BLOCK 1
+
+#define BLOCK_I 0
+#define BLOCK_S 1
+#define BLOCK_M 2
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -58,6 +65,7 @@ int cache_access(cache_t *cp, unsigned long *up_access_address, unsigned long ad
 //2 (if a miss and a dirty block is writen back)
 
 int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long address);
+void cache_apply_access(cache_t *cp, struct cache_blk_t *block, unsigned long address, int access_type /*0 for read, 1 for write*/);
 void cache_block_init(cache_t *cp, struct cache_blk_t *block, unsigned long address);
 void cache_block_copy(struct cache_blk_t *dst, struct cache_blk_t *src);
 #endif // _CACHE_H
