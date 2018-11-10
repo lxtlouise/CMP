@@ -165,9 +165,9 @@ void cache_apply_access(cache_t *cp, struct cache_blk_t *block, unsigned long ad
         if (&(cp->blocks[index][i]) == block)
         {
             updateLRU(cp, index, i) ;
-            cp->blocks[index][way].valid = 1 ;
-            cp->blocks[index][way].tag = tag ;
-            cp->blocks[index][way].block_address = cache_getAddress(cp, index, tag);
+            cp->blocks[index][i].valid = 1 ;
+            cp->blocks[index][i].tag = tag ;
+            cp->blocks[index][i].block_address = cache_getAddress(cp, index, tag);
             if (access_type == 1) cp->blocks[index][i].dirty = 1 ;
         }
     }
