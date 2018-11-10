@@ -10,6 +10,17 @@ Tile* get_home_tile(unsigned long address){
     return &(cpu.tiles[address]);
 }
 
+void L2_invalidate_block(int* delay, Tile *tile, struct cache_blk_t *l2_block){
+    int i;
+    for(i=0; i<cpu.n_tiles; i++){
+        if(l2_block->directory_entry.owner_tiles[i]>0){
+            struct cache_blk_t *l1_block;
+            if(cache_retrieve_block(cpu.tiles[i].L1_cache, &l1_block, l2_block->block_address)==CACHE_SAME_BLOCK && l1_block->valid)
+                l1_block->valid = 0;
+            l2_block->directory_entry.owner_tiles[i] = 0;
+        }
+    }
+}
 
 void L1_read_hit(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t *access){
     *delay = *delay + 0;
@@ -21,11 +32,52 @@ void L1_write_hit(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_
     cache_apply_access(tile->L1_cache, block, access->address, access->access_type);
 }
 
+void L2_read_hit(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t *access){
+    *delay = *delay + 0;
+    cache_apply_access(tile->L2_cache, block, block->block_address, 0);
+}
+
+void L2_write_hit(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t *access){
+    *delay = *delay + 0;
+    cache_apply_access(tile->L2_cache, block, block->block_address, 1);
+}
+
 void make_block_exclusive(int* delay, Tile *tile, struct cache_blk_t *block){
     *delay = *delay + 0;
 }
 
 void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block){
+    int i;
+    Tile *home_tile = get_home_tile(block->block_address);
+    struct cache_blk_t *l2_block;
+    int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    if(r == CACHE_SAME_BLOCK){
+        if(l2_block->valid){
+            if(l2_block->directory_entry.block_state==BLOCK_S){
+                l2_block->directory_entry.owner_tiles[tile->index] = 1;
+            } else {
+                if(l2_block->directory_entry.owner_tiles[tile->index]==0){
+                    L2_invalidate_block(delay, home_tile, l2_block);
+                    l2_block->directory_entry.owner_tiles[tile->index] = 1;
+                    l2_block->directory_entry.block_state = BLOCK_S;
+                }
+            }
+        } else {
+            cache_block_init(home_tile->L2_cache, l2_block, block->block_address);
+            l2_block->directory_entry.owner_tiles[tile->index] = 1;
+            l2_block->directory_entry.block_state = BLOCK_S;
+        }
+    } else {
+        if(l2_block->valid){
+            L2_invalidate_block(delay, home_tile, l2_block);
+            l2_block->directory_entry.owner_tiles[tile->index] = 1;
+            l2_block->directory_entry.block_state = BLOCK_S;
+        } else {
+            cache_block_init(home_tile->L2_cache, l2_block, block->block_address);
+            l2_block->directory_entry.owner_tiles[tile->index] = 1;
+            l2_block->directory_entry.block_state = BLOCK_S;
+        }
+    }
     *delay = *delay + 0;
 }
 
