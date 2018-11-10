@@ -16,7 +16,7 @@ cache_t * cache_create(int size, int blocksize, int assoc)
   for(i = 0; i < nsets; i++) {
 		C->blocks[i] = (struct cache_blk_t *)calloc(assoc, sizeof(struct cache_blk_t));
 		for (k=0 ; k< assoc ; k++){
-            C->blocks[i][k].directory_entry.owner_tiles = (int*)calloc(cpu.n_tiles, sizeof(int));
+            C->blocks[i][k].bit_vec = (int*)calloc(cpu.n_tiles, sizeof(int));
 		}
 	}
   return C;
@@ -181,16 +181,16 @@ void cache_block_init(cache_t *cp, struct cache_blk_t *block, unsigned long addr
     block->valid = 1 ;
     block->tag = tag ;
     block->block_address = cache_get_block_address(cp, address);
-    block->directory_entry.block_state = BLOCK_I;
+    block->block_state = BLOCK_I;
     for(i=0; i<cpu.n_tiles; i++){
-        block->directory_entry.owner_tiles[i] = 0;
+        block->bit_vec[i] = 0;
     }
 
 }
 
 void cache_block_copy(struct cache_blk_t *dst, struct cache_blk_t *src){
     dst->block_address = src->block_address;
-    dst->directory_entry.block_state = src->directory_entry.block_state;
-    memcpy(dst->directory_entry.owner_tiles, src->directory_entry.owner_tiles, sizeof(int) * cpu.n_tiles);
+    dst->block_state = src->block_state;
+    memcpy(dst->bit_vec, src->bit_vec, sizeof(int) * cpu.n_tiles);
     dst->tag = src->tag;
 }

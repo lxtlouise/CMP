@@ -13,11 +13,11 @@ Tile* get_home_tile(unsigned long address){
 void L2_invalidate_block(int* delay, Tile *tile, struct cache_blk_t *l2_block){
     int i;
     for(i=0; i<cpu.n_tiles; i++){
-        if(l2_block->directory_entry.owner_tiles[i]>0){
+        if(l2_block->bit_vec[i]>0){
             struct cache_blk_t *l1_block;
             if(cache_retrieve_block(cpu.tiles[i].L1_cache, &l1_block, l2_block->block_address)==CACHE_SAME_BLOCK && l1_block->valid)
                 l1_block->valid = 0;
-            l2_block->directory_entry.owner_tiles[i] = 0;
+            l2_block->bit_vec[i] = 0;
         }
     }
 }
@@ -53,29 +53,29 @@ void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block){
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
     if(r == CACHE_SAME_BLOCK){
         if(l2_block->valid){
-            if(l2_block->directory_entry.block_state==BLOCK_S){
-                l2_block->directory_entry.owner_tiles[tile->index] = 1;
+            if(l2_block->block_state==BLOCK_S){
+                l2_block->bit_vec[tile->index] = 1;
             } else {
-                if(l2_block->directory_entry.owner_tiles[tile->index]==0){
+                if(l2_block->bit_vec[tile->index]==0){
                     L2_invalidate_block(delay, home_tile, l2_block);
-                    l2_block->directory_entry.owner_tiles[tile->index] = 1;
-                    l2_block->directory_entry.block_state = BLOCK_S;
+                    l2_block->bit_vec[tile->index] = 1;
+                    l2_block->block_state = BLOCK_S;
                 }
             }
         } else {
             cache_block_init(home_tile->L2_cache, l2_block, block->block_address);
-            l2_block->directory_entry.owner_tiles[tile->index] = 1;
-            l2_block->directory_entry.block_state = BLOCK_S;
+            l2_block->bit_vec[tile->index] = 1;
+            l2_block->block_state = BLOCK_S;
         }
     } else {
         if(l2_block->valid){
             L2_invalidate_block(delay, home_tile, l2_block);
-            l2_block->directory_entry.owner_tiles[tile->index] = 1;
-            l2_block->directory_entry.block_state = BLOCK_S;
+            l2_block->bit_vec[tile->index] = 1;
+            l2_block->block_state = BLOCK_S;
         } else {
             cache_block_init(home_tile->L2_cache, l2_block, block->block_address);
-            l2_block->directory_entry.owner_tiles[tile->index] = 1;
-            l2_block->directory_entry.block_state = BLOCK_S;
+            l2_block->bit_vec[tile->index] = 1;
+            l2_block->block_state = BLOCK_S;
         }
     }
     *delay = *delay + 0;

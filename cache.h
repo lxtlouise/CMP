@@ -19,10 +19,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef struct _directory_entry_t{
-    int *owner_tiles;
-    int block_state;
-}directory_entry_t;
+// typedef struct _directory_entry_t{
+//     int *owner_tiles;
+//     int block_state;
+// }directory_entry_t;
 
 struct cache_blk_t { // note that no actual data will be stored in the cache
   unsigned long tag;
@@ -31,7 +31,8 @@ struct cache_blk_t { // note that no actual data will be stored in the cache
   unsigned LRU;	//to be used to build the LRU stack for the blocks in a cache set
 
   unsigned long block_address;
-  directory_entry_t directory_entry;
+  int *bit_vec; // directory entry
+  int block_state;
 };
 
 typedef struct _cache_t {
