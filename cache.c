@@ -19,6 +19,8 @@ cache_t * cache_create(int size, int blocksize, int assoc)
             C->blocks[i][k].bit_vec = (int*)calloc(cpu.n_tiles, sizeof(int));
 		}
 	}
+  C->n_hits = 0;
+  C->n_misses = 0;
   return C;
 }
 
@@ -182,6 +184,7 @@ void cache_block_init(cache_t *cp, struct cache_blk_t *block, unsigned long addr
     block->tag = tag ;
     block->block_address = cache_get_block_address(cp, address);
     block->block_state = BLOCK_I;
+    //block->block_delay = 0;
     for(i=0; i<cpu.n_tiles; i++){
         block->bit_vec[i] = 0;
     }
@@ -193,4 +196,14 @@ void cache_block_copy(struct cache_blk_t *dst, struct cache_blk_t *src){
     dst->block_state = src->block_state;
     memcpy(dst->bit_vec, src->bit_vec, sizeof(int) * cpu.n_tiles);
     dst->tag = src->tag;
+}
+
+void cache_traverse_blocks(cache_t *cp, void(*callback)(struct cache_blk_t*)){
+    int i, w;
+    for(i=0; i<cp->nsets; i++){
+        for(w=0; w<cp->assoc; w++){
+           struct cache_blk_t *block = &(cp->blocks[i][w]);
+           callback(block);
+        }
+    }
 }

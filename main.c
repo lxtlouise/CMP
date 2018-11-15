@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cmp.h"
+
+void decrease_block_delay(struct cache_blk_t *block){
+    if(block->block_delay>0)
+        block->block_delay--;
+}
+
 int main()
 {
     read_configfile("config.txt");
     init_cpu();
-    read_trace_file("trace0");
+    read_trace_file("testtrace");
     int clock = 1;
     int i,j;
     memory_request_t *issued_requests = (memory_request_t*)malloc(sizeof(memory_request_t) * cpu.n_tiles);
@@ -54,7 +60,11 @@ int main()
         if(have_more_requests==0)
             break;
         clock++;
+        for(i=0; i<cpu.n_tiles; i++){
+            cache_traverse_blocks(cpu.tiles[i].L2_cache, decrease_block_delay);
+        }
         printf("\n");
+
     }
     free(issued_requests);
     free(completed_requests);

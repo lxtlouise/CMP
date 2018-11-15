@@ -33,6 +33,7 @@ struct cache_blk_t { // note that no actual data will be stored in the cache
   unsigned long block_address;
   int *bit_vec; // directory entry
   int block_state;
+  int block_delay;
 };
 
 typedef struct _cache_t {
@@ -44,6 +45,8 @@ typedef struct _cache_t {
   int assoc;					// associativity
   int miss_penalty;				// the miss penalty
   struct cache_blk_t **blocks;	// a pointer to the array of cache blocks
+  int n_hits;
+  int n_misses;
 }cache_t;
 
 //------------------------------
@@ -69,5 +72,6 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
 void cache_apply_access(cache_t *cp, struct cache_blk_t *block, unsigned long address, int access_type /*0 for read, 1 for write*/);
 void cache_block_init(cache_t *cp, struct cache_blk_t *block, unsigned long address);
 void cache_block_copy(struct cache_blk_t *dst, struct cache_blk_t *src);
+void cache_traverse_blocks(cache_t *cp, void(*callback)(struct cache_blk_t*));
 #endif // _CACHE_H
 

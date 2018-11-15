@@ -30,6 +30,23 @@ void L2_invalidate_block(int* delay, Tile *tile, struct cache_blk_t *l2_block){
     }
 }
 
+void register_L1_hit(Tile *tile){
+    tile->L1_cache->n_hits++;
+    printf("%-3i: L1 hit\n", tile->index);
+}
+void register_L1_miss(Tile *tile){
+    tile->L1_cache->n_misses++;
+    printf("%-3i: L1 miss\n", tile->index);
+}
+void register_L2_hit(Tile *tile){
+    tile->L2_cache->n_hits++;
+    printf("%-3i: L2 hit\n", tile->index);
+}
+void register_L2_miss(Tile *tile){
+    tile->L2_cache->n_misses++;
+    printf("%-3i: L2 miss\n", tile->index);
+}
+
 void L1_read_hit(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t *access){
     *delay = *delay + 0;
     cache_apply_access(tile->L1_cache, block, access->address, access->access_type);
@@ -73,9 +90,12 @@ void make_block_exclusive(int* delay, Tile *tile, struct cache_blk_t *block){
     Tile *home_tile = get_home_tile(block->block_address);
     struct cache_blk_t *l2_block;
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    *delay += l2_block->block_delay;
     if(r == CACHE_SAME_BLOCK){
         if(l2_block->valid){
             if(l2_block->block_state!=BLOCK_M){
+                L2_invalidate_block(delay, home_tile, l2_block);
+            } else if(l2_block->bit_vec[tile->index]==0){
                 L2_invalidate_block(delay, home_tile, l2_block);
             }
         }
@@ -83,6 +103,7 @@ void make_block_exclusive(int* delay, Tile *tile, struct cache_blk_t *block){
     l2_block->bit_vec[tile->index] = 1;
     l2_block->block_state = BLOCK_M;
     cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 1);
+    l2_block->block_delay = *delay;
 }
 
 void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block){
@@ -90,6 +111,7 @@ void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block){
     Tile *home_tile = get_home_tile(block->block_address);
     struct cache_blk_t *l2_block;
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    *delay += l2_block->block_delay;
     if(r == CACHE_SAME_BLOCK){
         if(l2_block->valid){
             if(l2_block->block_state!=BLOCK_S){
@@ -111,6 +133,7 @@ void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block){
     l2_block->bit_vec[tile->index] = 1;
     l2_block->block_state = BLOCK_S;
     cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 0);
+    l2_block->block_delay = *delay;
     *delay += config.d;
 }
 
@@ -119,9 +142,12 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block){
     Tile *home_tile = get_home_tile(block->block_address);
     struct cache_blk_t *l2_block;
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    *delay += l2_block->block_delay;
     if(r == CACHE_SAME_BLOCK){
         if(l2_block->valid){
             if(l2_block->block_state!=BLOCK_M){
+                L2_invalidate_block(delay, home_tile, l2_block);
+            } else if(l2_block->bit_vec[tile->index]==0){
                 L2_invalidate_block(delay, home_tile, l2_block);
             }
         } else {
@@ -139,6 +165,7 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block){
     l2_block->block_state = BLOCK_M;
     cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 1);
     *delay += config.d;
+    l2_block->block_delay = *delay;
 }
 
 void evict_block(int* delay, Tile *tile, struct cache_blk_t *block){
@@ -161,25 +188,31 @@ void process_issued_requests(memory_request_t *requests, int n_requests){
         if(r==CACHE_SAME_BLOCK){
             if(block->valid){
                 if(access->access_type==0){ // SIMPLE L1 READ HIT
+                    register_L1_hit(tile);
                     L1_read_hit(&(requests[i].delay), tile, block, access);
                 } else {
                     if(block->dirty){ // SIMPLE L1 WRITE HIT
+                        register_L1_hit(tile);
                         L1_write_hit(&(requests[i].delay), tile, block, access);
-                    } else { // L1 WRITE HIT BUT NOT EXCLUSIVE
+                    } else { // L1 WRITE MISS BECAUSE NOT EXCLUSIVE
+                        register_L1_miss(tile);
                         make_block_exclusive(&(requests[i].delay), tile, block);// make block exclusive
                         L1_write_hit(&(requests[i].delay), tile, block, access);
                     }
                 }
             } else {
                 if(access->access_type==0){ // L1 READ MISS
+                    register_L1_miss(tile);
                     request_shared_block(&(requests[i].delay), tile, block);// request shared block
                     L1_read_hit(&(requests[i].delay), tile, block, access);
                 } else { // L1 WRITE MISS
+                    register_L1_miss(tile);
                     request_exclusive_block(&(requests[i].delay), tile, block);// request exclusive block
                     L1_write_hit(&(requests[i].delay), tile, block, access);
                 }
             }
         } else {
+            register_L1_miss(tile);
             if(block->valid){
                 if(block->dirty){
                     evict_block(&(requests[i].delay), tile, block);// evict block

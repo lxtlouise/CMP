@@ -84,10 +84,11 @@ void read_trace_file(char *fileName){
         tile->accesses[tile->n_accesses].core_id = core_id;
         tile->accesses[tile->n_accesses].access_type = access_type;
         tile->accesses[tile->n_accesses].address = address;
-        tile->accesses[tile->n_accesses].delay = 0;
+        tile->accesses[tile->n_accesses].request_delay = 0;
+        tile->accesses[tile->n_accesses].status = STATUS_NONE;
         tile->is_finished = 0;
         if(tile->n_accesses>0){
-            tile->accesses[tile->n_accesses].delay = clock_cycle - tile->accesses[tile->n_accesses-1].cycle - 1;
+            tile->accesses[tile->n_accesses].request_delay = clock_cycle - tile->accesses[tile->n_accesses-1].cycle - 1;
         }
         tile->n_accesses++;
 
@@ -114,15 +115,15 @@ mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed){
         return NULL;
     }
     mem_access_t *access = &(tile->accesses[tile->access_index]);
-    if(tile->delay_offset>0 || access->delay>0){
+    if(tile->delay_offset>0 || access->request_delay>0){
         if(tile->delay_offset>0){
             tile->delay_offset--;
             if(tile->delay_offset==0){
                 *completed = &(tile->accesses[tile->access_index-1]);
                 // request completed
             }
-        } else if(access->delay>0)
-            access->delay--;
+        } else if(access->request_delay>0)
+            access->request_delay--;
         return NULL;
     } else {
         tile->access_index++;
@@ -134,7 +135,7 @@ mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed){
 }
 
 void print_mem_issue(memory_request_t *request){
-    printf("%-3i: ISSUE    %-6i, %s, 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->access->address);
+    printf("%-3i: ISSUE    %-6i, %s[%i], 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->delay, request->access->address);
 }
 
 void print_mem_complete(memory_request_t *request){

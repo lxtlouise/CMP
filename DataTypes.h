@@ -4,7 +4,9 @@
 #define WHITE_SPACE " \t\n"
 #define LINE_TERMINATOR "\n"
 #define CONFIG_EQUAL "="
-
+#define STATUS_NONE 0
+#define STATUS_WAITING_L2 1
+#define STATUS_COMPLETED 2
 #include "cache.h"
 typedef struct _config {
     int p; // 2^p tiles
@@ -23,7 +25,8 @@ typedef struct _mem_access{
     int core_id;
     int access_type;
     unsigned long address;
-    int delay;
+    int request_delay;
+    int status;
 }mem_access_t;
 
 typedef struct _tile {
