@@ -39,6 +39,7 @@ void init_cpu(){
         cpu.tiles[i].index = i;
         cpu.tiles[i].index_x = x;
         cpu.tiles[i].index_y = y;
+        cpu.tiles[i].enroute_access = NULL;
         init_tile(&(cpu.tiles[i]));
         x++;
     }
@@ -85,7 +86,7 @@ void read_trace_file(char *fileName){
         tile->accesses[tile->n_accesses].access_type = access_type;
         tile->accesses[tile->n_accesses].address = address;
         tile->accesses[tile->n_accesses].request_delay = 0;
-        tile->accesses[tile->n_accesses].status = STATUS_NONE;
+        tile->accesses[tile->n_accesses].status = STATUS_TO_START;
         tile->is_finished = 0;
         if(tile->n_accesses>0){
             tile->accesses[tile->n_accesses].request_delay = clock_cycle - tile->accesses[tile->n_accesses-1].cycle - 1;
@@ -135,7 +136,7 @@ mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed){
 }
 
 void print_mem_issue(memory_request_t *request){
-    printf("%-3i: ISSUE    %-6i, %s[%i], 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->delay, request->access->address);
+    printf("%-3i: %s    %-6i, %s[%i], 0x%08x\n", request->access->core_id, request->access->status==STATUS_TO_COMPLETE?" ISSUED":"ENROUTE", request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->delay, request->access->address);
 }
 
 void print_mem_complete(memory_request_t *request){

@@ -4,9 +4,14 @@
 #define WHITE_SPACE " \t\n"
 #define LINE_TERMINATOR "\n"
 #define CONFIG_EQUAL "="
-#define STATUS_NONE 0
-#define STATUS_WAITING_L2 1
-#define STATUS_COMPLETED 2
+#define STATUS_TO_START 0
+#define STATUS_TO_L2 1
+#define STATUS_TO_COMPLETE 2
+
+#define ACCESS_MAKE_EXCLUSIVE
+#define ACCESS_REQUEST_EXCLUSIVE
+#define ACCESS_REQUEST_SHARED
+
 #include "cache.h"
 typedef struct _config {
     int p; // 2^p tiles
@@ -38,13 +43,14 @@ typedef struct _tile {
     int access_index;
     int delay_offset;
     mem_access_t *accesses;
+    mem_access_t *enroute_access;
     int n_accesses;
     size_t accesses_capacity;
     int is_finished;
 }Tile;
 
 typedef struct _memory_request{
-    Tile *tile;
+    //Tile *tile;
     mem_access_t *access;
     int delay;
 }memory_request_t;
