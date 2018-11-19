@@ -85,6 +85,10 @@ void get_block_from_memory(int* delay, Tile *tile, Tile *home_tile){
     *delay += tile2tile_delay(home_tile, tile); // message from home tile to tile
 }
 
+void push_block_to_memory(int* delay, Tile *tile, struct cache_blk_t *l2_block){
+    // push block to  memory
+}
+
 void make_block_exclusive(int* delay, Tile *tile, struct cache_blk_t *block){
     int i;
     Tile *home_tile = get_home_tile(block->block_address);
@@ -110,7 +114,6 @@ void make_block_exclusive(int* delay, Tile *tile, struct cache_blk_t *block){
 void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block){
     int i;
     Tile *home_tile = get_home_tile(block->block_address);
-    *delay += tile2tile_delay(tile, home_tile);
     struct cache_blk_t *l2_block;
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
     *delay += l2_block->block_delay;
@@ -136,6 +139,7 @@ void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block){
     l2_block->block_state = BLOCK_S;
     cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 0);
     l2_block->block_delay = *delay;
+    *delay += tile2tile_delay(tile, home_tile);
     *delay += config.d;
 }
 
@@ -172,11 +176,34 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block){
 }
 
 void evict_block(int* delay, Tile *tile, struct cache_blk_t *block){
-    *delay = *delay + 0;
+    int i;
+    Tile *home_tile = get_home_tile(block->block_address);
+    int bdelay = 0;
+    bdelay += tile2tile_delay(tile, home_tile);
+    struct cache_blk_t *l2_block;
+    int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    bdelay += l2_block->block_delay;
+    push_block_to_memory(&bdelay, home_tile, l2_block);
+    l2_block->bit_vec[tile->index] = 0;
+    l2_block->block_state = BLOCK_S;
+    cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 1);
+    l2_block->dirty = 1;
+    l2_block->block_delay = bdelay;
 }
 
 void invalidate_block(int* delay, Tile *tile, struct cache_blk_t *block){
-    *delay = *delay + 0;
+    int i;
+    Tile *home_tile = get_home_tile(block->block_address);
+    int bdelay = 0;
+    bdelay += tile2tile_delay(tile, home_tile);
+    struct cache_blk_t *l2_block;
+    int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    bdelay += l2_block->block_delay;
+    l2_block->bit_vec[tile->index] = 0;
+    l2_block->block_state = BLOCK_S;
+    cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 0);
+    l2_block->dirty = 0;
+    l2_block->block_delay = bdelay;
 }
 
 void request_L2_block(int* delay, Tile *tile, struct cache_blk_t *block){
