@@ -1,0 +1,12 @@
+1 0 1 0x00000012  L1, L2 miss  takes: 0+4+20+0=24        completed at: cycle 25
+1 1 0 0x00000012  L1 miss      takes: 2+(24-2)+4+2=30    completed at: cycle 31
+1 2 0 0x00000012  L1 miss      takes: 2+(24-2)+4+2=30    completed at: cycle 31
+1 3 0 0x00000013  L1, L2 miss  takes: 4+4+20+4=32        completed at: cycle 33
+2 0 1 0x00000013  L1 miss      takes: 4+(4+4)=12         completed at: cycle 38
+2 1 1 0x00000013  L1 miss      takes: 2+4+2+0=8          completed at: cycle 40
+2 2 1 0x00000012  L1 hit       takes: 0+2+2+4+4=12       completed at: cycle 44
+2 3 1 0x00000014  L1, L2 miss  takes: 4+4+20+4=32        completed at: cycle 66
+
+
+This trace file is to test whether the simulator can serialize R/W or W/R or W/W requests correctly.
+Delays take the number of cycles to invalidate remote tiles into consideration.
