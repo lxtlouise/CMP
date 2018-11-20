@@ -11,7 +11,7 @@ int main()
 {
     read_configfile("config.txt");
     init_cpu();
-    read_trace_file("testtrace");
+    read_trace_file("trace3");
     int clock = 1;
     int i,j;
     memory_request_t *issued_requests = (memory_request_t*)malloc(sizeof(memory_request_t) * cpu.n_tiles);

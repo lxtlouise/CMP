@@ -17,6 +17,7 @@ void L1_write_back_block(int* delay, Tile *tile, struct cache_blk_t *l1_block){
 
 void L2_invalidate_block(int* delay, Tile *tile, struct cache_blk_t *l2_block, int except_core_id){
     int i;
+    int max_delay = 0;
     for(i=0; i<cpu.n_tiles; i++){
         if(l2_block->bit_vec[i]>0 && i!=except_core_id){
             struct cache_blk_t *l1_block;
@@ -24,10 +25,14 @@ void L2_invalidate_block(int* delay, Tile *tile, struct cache_blk_t *l2_block, i
                 if(l1_block->dirty)
                     L1_write_back_block(delay, &(cpu.tiles[i]), l1_block);
                 l1_block->valid = 0;
+                int d = 2*tile2tile_delay(tile, &(cpu.tiles[i]));
+                if(d>max_delay)
+                    max_delay = d;
             }
             l2_block->bit_vec[i] = 0;
         }
     }
+    *delay += max_delay;
 }
 
 void L1_read_hit(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t *access){
@@ -74,22 +79,19 @@ void push_block_to_memory(int* delay, Tile *tile, struct cache_blk_t *l2_block, 
 }
 
 void make_block_exclusive(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t* access){
-    int i;
+    int i, to_hit = 0;
     Tile *home_tile = get_home_tile(block->block_address);
     struct cache_blk_t *l2_block;
     *delay += tile2tile_delay(tile, home_tile);
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
     *delay += l2_block->block_delay;
     if(r == CACHE_SAME_BLOCK){
-        if(l2_block->block_delay==0)
-            log_L2_hit(access);
-        else
-            log_L2_miss(access);
         if(l2_block->valid){
+            to_hit = 1;
             if(l2_block->block_state!=BLOCK_M){
-                L2_invalidate_block(delay, home_tile, l2_block, home_tile->index);
+                L2_invalidate_block(delay, home_tile, l2_block, tile->index);
             } else if(l2_block->bit_vec[tile->index]==0){
-                L2_invalidate_block(delay, home_tile, l2_block, home_tile->index);
+                L2_invalidate_block(delay, home_tile, l2_block, tile->index);
             }
         }
     }
@@ -97,24 +99,27 @@ void make_block_exclusive(int* delay, Tile *tile, struct cache_blk_t *block, mem
     l2_block->block_state = BLOCK_M;
     cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 1);
     l2_block->block_delay = *delay;
+    if(to_hit){
+        if(l2_block->block_delay==0)
+            log_L2_hit(access);
+        else
+            log_L2_miss(access);
+    }
 }
 
 void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t* access){
-    int i;
+    int i, to_hit = 0;
     Tile *home_tile = get_home_tile(block->block_address);
     struct cache_blk_t *l2_block;
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
     *delay += l2_block->block_delay;
     if(r == CACHE_SAME_BLOCK){
         if(l2_block->valid){
-            if(l2_block->block_delay==0)
-                log_L2_hit(access);
-            else
-                log_L2_miss(access);
+            to_hit = 1;
             if(l2_block->block_state==BLOCK_S){
             } else {
                 if(l2_block->bit_vec[tile->index]==0){
-                    L2_invalidate_block(delay, home_tile, l2_block, home_tile->index);
+                    L2_invalidate_block(delay, home_tile, l2_block, tile->index);
                 }
             }
         } else {
@@ -135,12 +140,18 @@ void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block, mem
     l2_block->block_state = BLOCK_S;
     cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 0);
     l2_block->block_delay = *delay;
+    if(to_hit){
+        if(l2_block->block_delay==0)
+            log_L2_hit(access);
+        else
+            log_L2_miss(access);
+    }
     *delay += tile2tile_delay(tile, home_tile);
     *delay += config.d;
 }
 
 void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t* access){
-    int i;
+    int i, to_hit = 1;
     Tile *home_tile = get_home_tile(block->block_address);
     *delay += tile2tile_delay(tile, home_tile);
     struct cache_blk_t *l2_block;
@@ -148,14 +159,11 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block, 
     *delay += l2_block->block_delay;
     if(r == CACHE_SAME_BLOCK){
         if(l2_block->valid){
-            if(l2_block->block_delay==0)
-                log_L2_hit(access);
-            else
-                log_L2_miss(access);
+            to_hit = 1;
             if(l2_block->block_state!=BLOCK_M){
-                L2_invalidate_block(delay, home_tile, l2_block, home_tile->index);
+                L2_invalidate_block(delay, home_tile, l2_block, tile->index);
             } else if(l2_block->bit_vec[tile->index]==0){
-                L2_invalidate_block(delay, home_tile, l2_block, home_tile->index);
+                L2_invalidate_block(delay, home_tile, l2_block, tile->index);
             }
         } else {
             log_L2_miss(access);
@@ -174,8 +182,15 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block, 
     l2_block->bit_vec[tile->index] = 1;
     l2_block->block_state = BLOCK_M;
     cache_apply_access(home_tile->L2_cache, l2_block, block->block_address, 1);
+    *delay += tile2tile_delay(tile, home_tile);
     *delay += config.d;
     l2_block->block_delay = *delay;
+    if(to_hit){
+        if(l2_block->block_delay==0)
+            log_L2_hit(access);
+        else
+            log_L2_miss(access);
+    }
 }
 
 void evict_block(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t* access){
