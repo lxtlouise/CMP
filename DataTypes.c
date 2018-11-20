@@ -136,10 +136,14 @@ mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed){
 }
 
 void print_mem_issue(memory_request_t *request){
-    printf("%-3i: %s    %-6i, %s[%i], 0x%08x\n", request->access->core_id, request->access->status==STATUS_TO_COMPLETE?" ISSUED":"ENROUTE", request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->delay, request->access->address);
+    printf("%-3i: %-6i %s 0x%08x  %s\n"
+        , request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?"R":"W", request->access->address, request->access->status==STATUS_TO_COMPLETE?" ISSUED":"ENROUTE");
+    //printf("%-3i: %s    %-6i, %s[%i], 0x%08x\n", request->access->core_id, request->access->status==STATUS_TO_COMPLETE?" ISSUED":"ENROUTE", request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->delay, request->access->address);
 }
 
 void print_mem_complete(memory_request_t *request){
-    printf("%-3i: COMPLETE %-6i, %s, 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->access->address);
+    printf("%-3i: %-6i %s 0x%08x  COMPLETE\n"
+        , request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?"R":"W", request->access->address);
+    //printf("%-3i: COMPLETE %-6i, %s, 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->access->address);
 }
 

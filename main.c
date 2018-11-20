@@ -68,7 +68,7 @@ int main()
         }
         process_issued_requests(issued_requests, n_issued_requests); // fill delays here
         for(i=0; i<n_issued_requests; i++){
-            print_mem_issue(&(issued_requests[i]));
+            //print_mem_issue(&(issued_requests[i]));
             cpu.tiles[issued_requests[i].access->core_id].delay_offset = issued_requests[i].delay;
             if(issued_requests[i].delay==0 && issued_requests[i].access->status==STATUS_TO_COMPLETE){
                 // current requests completed
