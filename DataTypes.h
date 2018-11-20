@@ -13,6 +13,7 @@
 #define ACCESS_REQUEST_SHARED
 
 #include "cache.h"
+
 typedef struct _config {
     int p; // 2^p tiles
     int n1; // 2^n1 bytes for L1
@@ -60,6 +61,7 @@ typedef struct _cpu{
     int width, height;
     Tile* tiles;
     int n_tiles;
+    int clock;
 }Cpu;
 
 extern Config config;
@@ -80,5 +82,5 @@ mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed);
 void print_mem_issue(memory_request_t *request);
 void print_mem_complete(memory_request_t *request);
 
-
+#include "log.h"
 #endif // _DATA_TYPES_H

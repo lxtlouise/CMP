@@ -1,57 +1,120 @@
 #include "log.h"
-
+log_entry_t *log_head;
+log_entry_t *log_tail;
 void log_get_info(mem_access_t *access, Tile **tile, Tile **home_tile, struct cache_blk_t **L1_block, struct cache_blk_t **L2_block){
     *tile = &(cpu.tiles[access->core_id]);
     *home_tile = get_home_tile(access->address);
     cache_retrieve_block((*tile)->L1_cache, L1_block, access->address);
     cache_retrieve_block((*home_tile)->L2_cache, L2_block, access->address);
 }
-void log_L1_hit(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
-    log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L1 HIT\n"
-        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+void init_log_entry(log_entry_t **entry){
+    *entry = (log_entry_t*)malloc(sizeof(log_entry_t));
+    (*entry)->clock = cpu.clock;
+    (*entry)->next = NULL;
 }
-void log_L1_miss(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
-    log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L1 MISS\n"
-        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+void log_operation(char* message, int delay){
+    int clock = cpu.clock + delay;
+    log_entry_t *log_current, *log_prev, *log_this;
+
+    init_log_entry(&(log_this));
+    log_this->clock = cpu.clock + delay;
+    strncpy(log_this->msg, message, 256);
+
+    if(log_head==NULL){
+        log_head = log_this;
+    } else {
+        log_current = log_head;
+        log_prev = NULL;
+        while(log_current != NULL && log_current->clock<= clock){
+            log_prev = log_current;
+            log_current = log_current->next;
+        }
+        if(log_prev==NULL){
+            log_this->next = log_head;
+            log_head = log_this;
+        } else {
+            log_this->next = log_current;
+            log_prev->next = log_this;
+        }
+    }
 }
-void log_L2_hit(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
-    log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L2 HIT\n"
-        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+
+void print_recent_log(){
+    while(log_head!=NULL && log_head->clock==cpu.clock){
+        printf("%s\n", log_head->msg);
+        if(log_head==log_tail){
+            free(log_head);
+            log_head = log_tail = NULL;
+        } else {
+            log_entry_t *l = log_head;
+            log_head = log_head->next;
+            free(l);
+        }
+    }
 }
-void log_L2_miss(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+
+void log_generic(mem_access_t *access, char* message, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
     log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L2 MISS\n"
-        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  %s"
+        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address
+        , message);
+    log_operation(msg, delay);
 }
-void log_L1_write_back(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+/*void log_L1_hit(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
     log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L2 WRITE BACK\n"
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L1 HIT"
         , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
 }
-void log_L2_write_back(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+void log_L1_miss(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
     log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L2 WRITE BACK\n"
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L1 MISS"
         , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
 }
-void log_L1_evict(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+void log_L2_hit(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
     log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L1 EVICT\n"
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L2 HIT"
         , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
 }
-void log_L1_invalidate(mem_access_t *access){
-    Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+void log_L2_miss(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
     log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
-    printf("%-3i: %-6i %s 0x%08x  L1 INVALIDATE\n"
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L2 MISS"
         , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
 }
+void log_L1_write_back(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+    log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L2 WRITE BACK"
+        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
+}
+void log_L2_write_back(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+    log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L2 WRITE BACK"
+        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
+}
+void log_L1_evict(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+    log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L1 EVICT"
+        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
+}
+void log_L1_invalidate(mem_access_t *access, int delay){
+    char msg[256]; Tile *tile, *home_tile; struct cache_blk_t **L1_block, **L2_block;
+    log_get_info(access, &tile, &home_tile, &L1_block, &L2_block);
+    sprintf(msg, "%-3i: %-6i %s 0x%08x  L1 INVALIDATE"
+        , access->core_id, access->cycle, access->access_type==READ_ACCESS?"R":"W", access->address);
+    log_operation(msg, delay);
+}*/
 

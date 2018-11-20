@@ -15,6 +15,9 @@ void init_tile(Tile *tile){
 }
 
 void init_cpu(){
+    cpu.clock = 1;
+    log_head = NULL;
+    log_tail = NULL;
     int i;
     cpu.n_tiles = 1 << config.p;
     int w;
@@ -143,8 +146,9 @@ void print_mem_issue(memory_request_t *request){
 }
 
 void print_mem_complete(memory_request_t *request){
-    printf("%-3i: %-6i %s 0x%08x  COMPLETE\n"
-        , request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?"R":"W", request->access->address);
+    //log_generic(request->access, "COMPLETED", 0);
+    //printf("%-3i: %-6i %s 0x%08x  COMPLETE\n"
+    //    , request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?"R":"W", request->access->address);
     //printf("%-3i: COMPLETE %-6i, %s, 0x%08x\n", request->access->core_id, request->access->cycle, request->access->access_type==READ_ACCESS?" READ":"WRITE", request->access->address);
 }
 

@@ -2,7 +2,6 @@
 #define _CMP_H
 #include "DataTypes.h"
 
-
 int tile2tile_delay(Tile *src, Tile *dst); /* returns the delay for tile to tile message */
 
 Tile* get_home_tile(unsigned long address);

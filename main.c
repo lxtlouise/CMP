@@ -9,10 +9,11 @@ void decrease_block_delay(struct cache_blk_t *block){
 
 int main()
 {
+    printf("---- Read configuration ----\n");
     read_configfile("config.txt");
     init_cpu();
     read_trace_file("trace3");
-    int clock = 1;
+    printf("\n---- Executing requests ----\n");
     int i,j;
     memory_request_t *issued_requests = (memory_request_t*)malloc(sizeof(memory_request_t) * cpu.n_tiles);
     memory_request_t *enroute_requests = (memory_request_t*)malloc(sizeof(memory_request_t) * cpu.n_tiles * 2);
@@ -20,7 +21,7 @@ int main()
     int n_enroute_requests = 0;
     while(1){
         int n_issued_requests=0, n_completed_requests=0;
-        printf("---Clock %i---\n", clock);
+        printf("---Clock %i---\n", cpu.clock);
         int have_more_requests = 0;
         mem_access_t *enroute, *completed;
         for(i=0; i<cpu.n_tiles; i++){
@@ -64,7 +65,8 @@ int main()
         }
         if(have_more_requests==0)
             break;
-        clock++;
+        print_recent_log();
+        cpu.clock++;
         for(i=0; i<cpu.n_tiles; i++){
             cache_traverse_blocks(cpu.tiles[i].L2_cache, decrease_block_delay);
         }
