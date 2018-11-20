@@ -8,5 +8,5 @@
 2 3 1 0x00000014  L1, L2 miss  takes: 4+4+20+4=32        completed at: cycle 66
 
 
-This trace file is to test whether the simulator can serialize R/W or W/R or W/W requests correctly.
+This trace file is to test whether the simulator can serialize R/W or W/R or W/W simultaneous requests correctly.
 Delays take the number of cycles to invalidate remote tiles into consideration.
