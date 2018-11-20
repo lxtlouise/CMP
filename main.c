@@ -21,22 +21,6 @@ int main()
     while(1){
         int n_issued_requests=0, n_completed_requests=0;
         printf("---Clock %i---\n", clock);
-        /*for(i=0; i<n_enroute_requests; i++){
-            Tile *tile = &(cpu.tiles[enroute_requests[i].access->core_id]);
-            if(tile->delay_offset==0){
-                issued_requests[n_issued_requests].access = enroute_requests[i].access;
-                issued_requests[n_issued_requests].delay = 0;
-                n_issued_requests++;
-            }
-            struct cache_blk_t *block;
-            if(cache_retrieve_block(cpu.tiles[enroute_requests[i].access->core_id].L2_cache, block, enroute_requests[i].access->address)==CACHE_SAME_BLOCK){
-                if(block->block_delay==0){
-                    issued_requests[n_issued_requests].access = enroute_requests[i].access;
-                    issued_requests[n_issued_requests].delay = 0;
-                    n_issued_requests++;
-                }
-            }
-        }*/
         int have_more_requests = 0;
         mem_access_t *enroute, *completed;
         for(i=0; i<cpu.n_tiles; i++){

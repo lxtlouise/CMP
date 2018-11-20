@@ -47,6 +47,7 @@ typedef struct _tile {
     int n_accesses;
     size_t accesses_capacity;
     int is_finished;
+    int cycles_to_finish;
 }Tile;
 
 typedef struct _memory_request{

@@ -11,6 +11,7 @@ void init_tile(Tile *tile){
     tile->accesses = malloc(sizeof(mem_access_t) * tile->accesses_capacity);
     tile->n_accesses = 0;
     tile->is_finished = 1;
+    tile->cycles_to_finish = 0;
 }
 
 void init_cpu(){
