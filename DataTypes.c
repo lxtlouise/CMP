@@ -96,7 +96,8 @@ void read_trace_file(char *fileName){
         tile->is_finished = 0;
         if(tile->n_accesses>0){
             tile->accesses[tile->n_accesses].request_delay = clock_cycle - tile->accesses[tile->n_accesses-1].cycle - 1;
-        }
+        } else
+            tile->delay_offset = clock_cycle>0?(clock_cycle - 1) : 0;
         tile->n_accesses++;
         free(line);
         line = NULL;
