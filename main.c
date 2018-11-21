@@ -94,10 +94,10 @@ int main(int argc, char** argv)
         printf("-- Core %i --\n", i);
         printf("Completed in %i cycles.\n", cpu.tiles[i].cycles_to_finish);
         d = cpu.tiles[i].L1_cache->n_hits + cpu.tiles[i].L1_cache->n_misses;
-        hit_rate = d==0?0.0 : ((float)(cpu.tiles[i].L1_cache->n_hits) / (float)d);
+        hit_rate = d==0?0.0 : ((float)(cpu.tiles[i].L1_cache->n_hits) / (float)(d));
         printf("L1 cache hit rate: %.4f\n", hit_rate);
         d = cpu.tiles[i].L2_cache->n_hits + cpu.tiles[i].L2_cache->n_misses;
-        hit_rate = d==0?0.0 : ((float)(cpu.tiles[i].L2_cache->n_hits) / (float)d);
+        hit_rate = d==0?0.0 : ((float)(cpu.tiles[i].L2_cache->n_hits) / (float)(d));
         printf("L2 cache hit rate: %.4f\n", hit_rate);
         printf("Number of messages: %i short and %i long.\n", cpu.tiles[i].short_messages, cpu.tiles[i].long_messages);
         int penalty = 0, n_penalty = 0;

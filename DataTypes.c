@@ -51,9 +51,10 @@ void init_cpu(){
 }
 
 void read_trace_file(char *fileName){
-    char *line = (char *) malloc (sizeof(char) * MAX_LINE);
+    char *line = NULL;//(char *) malloc (sizeof(char) * MAX_LINE);
     char *tempLine = (char *) malloc (sizeof(char) * MAX_LINE);
     char *temp = (char *) malloc (sizeof(char) * MAX_LINE);
+    char *tempLine2;
     char *tok;
 
     size_t len = 0;
@@ -68,18 +69,18 @@ void read_trace_file(char *fileName){
 
     while ((read = getlinenew(&line, &len, fp)) != -1) { //loop to read file line by line and tokenize
         strcpy (tempLine, line);
-        if ((tempLine = strtok(tempLine, WHITE_SPACE)) == NULL || *tempLine == 0) {
+        if ((tempLine2 = strtok(tempLine, WHITE_SPACE)) == NULL || *tempLine == 0) {
             continue;
         }
         char* line_ptr = NULL;
-        tempLine = strtok(line, WHITE_SPACE);
-        int clock_cycle = atoi(tempLine);
-        tempLine = strtok(NULL, WHITE_SPACE);
-        int core_id = atoi(tempLine);
-        tempLine = strtok(NULL, WHITE_SPACE);
-        int access_type = atoi(tempLine);
-        tempLine = strtok(NULL, WHITE_SPACE);
-        unsigned long address = strtoll(tempLine, NULL, 0);
+        tempLine2 = strtok(line, WHITE_SPACE);
+        int clock_cycle = atoi(tempLine2);
+        tempLine2 = strtok(NULL, WHITE_SPACE);
+        int core_id = atoi(tempLine2);
+        tempLine2 = strtok(NULL, WHITE_SPACE);
+        int access_type = atoi(tempLine2);
+        tempLine2 = strtok(NULL, WHITE_SPACE);
+        unsigned long address = strtoll(tempLine2, NULL, 0);
 
         Tile *tile = &(cpu.tiles[core_id]);
         if(tile->n_accesses >= tile->accesses_capacity-1){
@@ -97,9 +98,10 @@ void read_trace_file(char *fileName){
             tile->accesses[tile->n_accesses].request_delay = clock_cycle - tile->accesses[tile->n_accesses-1].cycle - 1;
         }
         tile->n_accesses++;
-
-        line = (char *) malloc (sizeof(char) * MAX_LINE);
-        tempLine = (char *) malloc (sizeof(char) * MAX_LINE);
+        free(line);
+        line = NULL;
+        //line = (char *) malloc (sizeof(char) * MAX_LINE);
+        //tempLine = (char *) malloc (sizeof(char) * MAX_LINE);
 
     }
 

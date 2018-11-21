@@ -128,6 +128,7 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
         if (cp->blocks[index][i].tag == tag) // found block for the address
         {
             *block = &(cp->blocks[index][i]);
+            (*block)->block_address = cache_getAddress(cp, index, tag);
             return CACHE_SAME_BLOCK;
         }
     }
@@ -136,6 +137,7 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
         if (cp->blocks[index][way].valid == 0)	/* found an invalid entry */
         {
             *block = &(cp->blocks[index][way]);
+            (*block)->block_address = cache_getAddress(cp, index, tag);
             return CACHE_DIFFERENT_BLOCK;
         }
 
@@ -147,6 +149,7 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
             way = i ;
         }
     *block = &(cp->blocks[index][way]);
+    (*block)->block_address = cache_getAddress(cp, index, tag);
     return CACHE_DIFFERENT_BLOCK;
 }
 
