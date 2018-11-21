@@ -330,6 +330,10 @@ void evict_block(int* delay, Tile *tile, struct cache_blk_t *block, mem_access_t
     bdelay += tile2tile_delay(tile, home_tile);
     struct cache_blk_t *l2_block;
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    if(r!=CACHE_SAME_BLOCK){
+        //printf("!");
+        return;
+    }
     bdelay += l2_block->block_delay;
     log_generic(access, "L1 evict", l2_block->block_delay);
     //push_block_to_memory(&bdelay, home_tile, l2_block, access);
@@ -349,6 +353,10 @@ void invalidate_block(int* delay, Tile *tile, struct cache_blk_t *block, mem_acc
     cpu.tiles[access->core_id].short_messages += 1;
     struct cache_blk_t *l2_block;
     int r = cache_retrieve_block(home_tile->L2_cache, &l2_block, block->block_address);
+    if(r!=CACHE_SAME_BLOCK){
+        //printf("!");
+        return;
+    }
     bdelay += l2_block->block_delay;
     log_generic(access, "L1 invalidate", l2_block->block_delay);
     l2_block->bit_vec[tile->index] = 0;
