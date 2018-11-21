@@ -138,9 +138,10 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
         {
             *block = &(cp->blocks[index][way]);
             cp->blocks[index][way].LRU = way ;
+            cp->blocks[index][way].tag = tag;
             updateLRU(cp, index, way);
             (*block)->block_address = cache_getAddress(cp, index, tag);
-            return CACHE_DIFFERENT_BLOCK;
+            return CACHE_SAME_BLOCK;
         }
 
     max = cp->blocks[index][0].LRU ;			/* find the LRU block */
@@ -151,7 +152,6 @@ int cache_retrieve_block(cache_t *cp, struct cache_blk_t **block, unsigned long 
             way = i ;
         }
     *block = &(cp->blocks[index][way]);
-    (*block)->block_address = cache_getAddress(cp, index, tag);
     return CACHE_DIFFERENT_BLOCK;
 }
 
