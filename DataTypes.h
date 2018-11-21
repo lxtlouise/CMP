@@ -33,6 +33,7 @@ typedef struct _mem_access{
     unsigned long address;
     int request_delay;
     int status;
+    int L1_penalty;
 }mem_access_t;
 
 typedef struct _tile {
@@ -49,6 +50,8 @@ typedef struct _tile {
     size_t accesses_capacity;
     int is_finished;
     int cycles_to_finish;
+    int short_messages;
+    int long_messages;
 }Tile;
 
 typedef struct _memory_request{
@@ -68,6 +71,7 @@ extern Config config;
 
 extern Cpu cpu;
 
+extern int debug_mode;
 
 void read_configfile(char *fileName);
 

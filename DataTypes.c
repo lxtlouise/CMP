@@ -1,7 +1,7 @@
 #include "DataTypes.h"
 #include <math.h>
 Cpu cpu;
-
+int debug_mode;
 void init_tile(Tile *tile){
     tile->L1_cache = cache_create((1 << config.n1) >> 10, 1 << config.b, 1 << config.a1);
     tile->L2_cache = cache_create((1 << config.n2) >> 10, 1 << config.b, 1 << config.a2);
@@ -12,12 +12,13 @@ void init_tile(Tile *tile){
     tile->n_accesses = 0;
     tile->is_finished = 1;
     tile->cycles_to_finish = 0;
+    tile->short_messages = 0;
+    tile->long_messages = 0;
 }
 
 void init_cpu(){
     cpu.clock = 1;
     log_head = NULL;
-    log_tail = NULL;
     int i;
     cpu.n_tiles = 1 << config.p;
     int w;
