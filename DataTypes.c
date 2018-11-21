@@ -82,7 +82,7 @@ void read_trace_file(char *fileName){
         unsigned long address = strtoll(tempLine, NULL, 0);
 
         Tile *tile = &(cpu.tiles[core_id]);
-        if(tile->n_accesses >= tile->accesses_capacity){
+        if(tile->n_accesses >= tile->accesses_capacity-1){
             tile->accesses_capacity = tile->accesses_capacity << 1;
             tile->accesses = realloc(tile->accesses, sizeof(mem_access_t)*tile->accesses_capacity);
         }
