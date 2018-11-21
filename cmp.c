@@ -216,7 +216,7 @@ void request_shared_block(int* delay, Tile *tile, struct cache_blk_t *block, mem
         log_generic(access, "L2 miss", *delay);
         //log_L2_miss(access, l2_block->block_delay);
         if(l2_block->valid){
-            notify_owner_blocks_from_local(delay, home_tile, l2_block, access, -1);
+            notify_owner_blocks_from_local(delay, tile, l2_block, access, -1);
             L2_invalidate_block(delay, home_tile, l2_block, -1);
             push_block_to_memory(delay, home_tile, l2_block, access);
         }
@@ -262,7 +262,7 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block, 
                 *delay += tile2tile_delay(tile, home_tile);
                 cpu.tiles[access->core_id].long_messages += 1;
                 log_generic(access, "return sharers and data", *delay);
-                notify_owner_blocks_from_local(delay, home_tile, l2_block, access, tile->index);
+                notify_owner_blocks_from_local(delay, tile, l2_block, access, tile->index);
                 L2_invalidate_block(delay, home_tile, l2_block, tile->index);
                 l2_block->block_delay = *delay + max_delay(tile2tile_delay(tile, home_tile), config.d);
                 cpu.tiles[access->core_id].short_messages += 1;
@@ -271,7 +271,7 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block, 
                 *delay += tile2tile_delay(tile, home_tile);
                 cpu.tiles[access->core_id].long_messages += 1;
                 log_generic(access, "return sharers and data", *delay);
-                notify_owner_blocks_from_local(delay, home_tile, l2_block, access, tile->index);
+                notify_owner_blocks_from_local(delay, tile, l2_block, access, tile->index);
                 L2_invalidate_block(delay, home_tile, l2_block, tile->index);
                 l2_block->block_delay = *delay + max_delay(tile2tile_delay(tile, home_tile), config.d);
                 cpu.tiles[access->core_id].short_messages += 1;
@@ -292,7 +292,7 @@ void request_exclusive_block(int* delay, Tile *tile, struct cache_blk_t *block, 
         home_tile->L2_cache->n_misses++;
         log_generic(access, "L2 miss", *delay);
         if(l2_block->valid){
-            notify_owner_blocks_from_local(delay, home_tile, l2_block, access, -1);
+            notify_owner_blocks_from_local(delay, tile, l2_block, access, -1);
             L2_invalidate_block(delay, home_tile, l2_block, -1);
             push_block_to_memory(delay, home_tile, l2_block, access);
         }
