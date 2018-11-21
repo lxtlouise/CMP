@@ -7,12 +7,18 @@ void decrease_block_delay(struct cache_blk_t *block){
         block->block_delay--;
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    //cValidate command line argument
+    if (argc != 3) {
+        printf ("USAGE: CMP <config_file>\n <trace_file>");
+        exit (EXIT_FAILURE);
+    }
+
     printf("---- Read configuration ----\n");
-    read_configfile("config.txt");
+    read_configfile(argv[1]);
     init_cpu();
-    read_trace_file("trace3");
+    read_trace_file(argv[2]);
     printf("\n---- Executing requests ----\n");
     int i,j;
     memory_request_t *issued_requests = (memory_request_t*)malloc(sizeof(memory_request_t) * cpu.n_tiles);
