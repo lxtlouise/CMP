@@ -116,7 +116,7 @@ mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed){
     if(tile->is_finished){
         if(tile->delay_offset>0){
             tile->delay_offset--;
-            if(tile->delay_offset==0){
+            if(tile->delay_offset==0 && tile->access_index>0){
                 *completed = &(tile->accesses[tile->access_index-1]);
                 // request completed
             }
@@ -127,7 +127,7 @@ mem_access_t * get_tile_next_access(Tile *tile, mem_access_t **completed){
     if(tile->delay_offset>0 || access->request_delay>0){
         if(tile->delay_offset>0){
             tile->delay_offset--;
-            if(tile->delay_offset==0){
+            if(tile->delay_offset==0 && tile->access_index>0){
                 *completed = &(tile->accesses[tile->access_index-1]);
                 // request completed
             }
